@@ -1,5 +1,3 @@
-// +build e2e_provider
-
 /*
 Copyright 2021 The Crossplane Authors.
 
@@ -39,12 +37,11 @@ import (
 func TestProviderUpgrade(t *testing.T) {
 	cases := map[string]struct {
 		reason string
-		body   func(providerPackage string, upgradeVersion pc.UpgradeProviderVersion) error
+		body   func(t *testing.T, providerPackage string, upgradeVersion pc.UpgradeProviderVersion) error
 	}{
 		"UpgradeProviderStableToLatest": {
 			reason: "Should be able to successfully update provider from latest stable to latest development build.",
-			body: func(providerPackage string, upgradeVersion pc.UpgradeProviderVersion) error {
-
+			body: func(t *testing.T, providerPackage string, upgradeVersion pc.UpgradeProviderVersion) error {
 				sl := strings.SplitAfter(providerPackage, "/")
 				packageName := sl[len(sl)-1]
 				initialProviderPackage := providerPackage + ":" + upgradeVersion.Initial
@@ -78,7 +75,7 @@ func TestProviderUpgrade(t *testing.T) {
 				}
 
 				// Wait for Provider to be successfully installed.
-				if err := provider.WaitForAllProvidersInstalled(ctx, c, 5*time.Second, 2*time.Minute); err != nil {
+				if err := provider.WaitForAllProvidersInstalled(t, ctx, c, 5*time.Second, 2*time.Minute); err != nil {
 					return err
 				}
 
@@ -110,7 +107,7 @@ func TestProviderUpgrade(t *testing.T) {
 		for _, upgradeVersion := range pr.Upgrade {
 			for name, tc := range cases {
 				t.Run(name, func(t *testing.T) {
-					if err := tc.body(pr.Package, upgradeVersion); err != nil {
+					if err := tc.body(t, pr.Package, upgradeVersion); err != nil {
 						t.Fatal(err)
 					}
 				})

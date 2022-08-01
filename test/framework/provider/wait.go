@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	v1 "github.com/crossplane/crossplane/apis/pkg/v1"
@@ -27,12 +28,18 @@ import (
 )
 
 // Wait for Provider to be successfully installed.
-func WaitForAllProvidersInstalled(ctx context.Context, c client.Client, interval time.Duration, timeout time.Duration) error {
+func WaitForAllProvidersInstalled(t *testing.T, ctx context.Context, c client.Client, interval time.Duration, timeout time.Duration) error {
 	if err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		l := &v1.ProviderList{}
 		if err := c.List(ctx, l); err != nil {
 			return false, err
 		}
+
+		t.Logf("len(installed providers list): %d", len(l.Items))
+		for _, p := range l.Items {
+			t.Logf("%s, %+v, %+v", p.Spec.Package, p.GetCondition(v1.TypeInstalled), p.GetCondition(v1.TypeHealthy))
+		}
+
 		if len(l.Items) != 1 {
 			return false, nil
 		}
